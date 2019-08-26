@@ -1,10 +1,9 @@
 use std::ffi::CString;
 use std::fmt;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use crate::error::*;
 use crate::*;
 
 const MEMORY_PRESSURE_FILEPATH: &'static str = "/proc/pressure/memory";
@@ -12,11 +11,15 @@ const MEMORY_PRESSURE_FILEPATH: &'static str = "/proc/pressure/memory";
 pub struct Trigger {
     pub kind: PsiKind,
     pub line: PsiLine,
-    pub trigger_filepath: PathBuf,
+    pub target_file_path: PathBuf,
     pub threshold: TriggerThreshold,
 }
 
 impl Trigger {
+    pub fn new_builder() -> TriggerBuilder {
+        TriggerBuilder
+    }
+
     pub fn generate_trigger(&self) -> CString {
         let mut buf = Vec::<u8>::with_capacity(32);
         match self.line {
@@ -27,20 +30,6 @@ impl Trigger {
         write!(&mut buf, "{} {}", t.stall.as_micros(), t.window.as_micros()).unwrap();
         CString::new(buf).unwrap()
     }
-
-    pub fn get_psi_stats(&self, psi: &str) -> Result<PsiStats> {
-        let pat = match self.line {
-            PsiLine::Some => "some ",
-            PsiLine::Full => "full ",
-        };
-        psi.lines()
-            .find(|line| line.starts_with(pat))
-            .ok_or(PsiError::UnexpectedTriggerEvent {
-                expected_kind: self.kind,
-                expected_line: self.line,
-            })
-            .and_then(|line| line.parse())
-    }
 }
 
 impl fmt::Display for Trigger {
@@ -50,6 +39,106 @@ impl fmt::Display for Trigger {
             "psi {} trigger on '{}' line with threshold: {}",
             self.kind, self.line, self.threshold
         )
+    }
+}
+
+pub struct TriggerBuilder;
+
+impl TriggerBuilder {
+    pub fn kind(self, kind: PsiKind) -> TriggerBuilderKind {
+        match kind {
+            PsiKind::Memory => self.memory(),
+            PsiKind::IO => unimplemented!(),
+            PsiKind::CPU => unimplemented!(),
+        }
+    }
+
+    pub fn memory(self) -> TriggerBuilderKind {
+        TriggerBuilderKind {
+            kind: PsiKind::Memory,
+            target_file_path: Path::new(MEMORY_PRESSURE_FILEPATH).to_path_buf()
+        }
+    }
+}
+
+pub struct TriggerBuilderKind {
+    kind: PsiKind,
+    target_file_path: PathBuf,
+}
+
+impl TriggerBuilderKind {
+    pub fn line(self, line: PsiLine) -> TriggerBuilderLine {
+        TriggerBuilderLine {
+            line,
+            kind: self.kind,
+            target_file_path: self.target_file_path,
+        }
+    }
+
+    pub fn some(self) -> TriggerBuilderLine {
+        self.line(PsiLine::Some)
+    }
+
+    pub fn full(self) -> TriggerBuilderLine {
+        self.line(PsiLine::Full)
+    }
+}
+
+pub struct TriggerBuilderLine {
+    kind: PsiKind,
+    target_file_path: PathBuf,
+    line: PsiLine,
+}
+
+impl TriggerBuilderLine {
+    pub fn stall(self, stall: Duration) -> TriggerBuilderStall {
+        TriggerBuilderStall {
+            stall,
+            kind: self.kind,
+            target_file_path: self.target_file_path,
+            line: self.line,
+        }
+    }
+}
+
+pub struct TriggerBuilderStall {
+    kind: PsiKind,
+    target_file_path: PathBuf,
+    line: PsiLine,
+    stall: Duration,
+}
+
+impl TriggerBuilderStall {
+    pub fn window(self, window: Duration) -> TriggerBuilderStaging {
+        TriggerBuilderStaging {
+            window,
+            kind: self.kind,
+            target_file_path: self.target_file_path,
+            line: self.line,
+            stall: self.stall,
+        }
+    }
+}
+
+pub struct TriggerBuilderStaging {
+    kind: PsiKind,
+    target_file_path: PathBuf,
+    line: PsiLine,
+    stall: Duration,
+    window: Duration,
+}
+
+impl TriggerBuilderStaging {
+    pub fn build(self) -> Trigger {
+        Trigger {
+            kind: self.kind,
+            target_file_path: self.target_file_path,
+            line: self.line,
+            threshold: TriggerThreshold {
+                window: self.window,
+                stall: self.stall,
+            },
+        }
     }
 }
 
@@ -84,7 +173,7 @@ impl MemoryTrigger {
         Trigger {
             line,
             kind: PsiKind::Memory,
-            trigger_filepath: MEMORY_PRESSURE_FILEPATH.into(),
+            target_file_path: MEMORY_PRESSURE_FILEPATH.into(),
             threshold: TriggerThreshold { stall, window },
         }
     }
