@@ -4,6 +4,7 @@ use std::fs::{read_link, File, OpenOptions};
 use std::io::SeekFrom::Start;
 use std::io::{Read, Seek, Write};
 use std::os::unix::io::*;
+use std::path::PathBuf;
 
 use epoll::*;
 use log::*;
@@ -11,11 +12,10 @@ use log::*;
 use crate::error::*;
 use crate::trigger::*;
 use crate::*;
-use std::path::PathBuf;
 
 pub struct PsiEvent {
     pub kind: PsiKind,
-    pub stats: PsiStats,
+    pub stats: Psi,
 }
 
 impl fmt::Display for PsiEvent {
@@ -48,7 +48,7 @@ impl PsiMonitor {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
-            .open(&trigger.trigger_filepath)?;
+            .open(&trigger.target_file_path)?;
         info!("registering {}", &trigger);
         debug!("trigger: {:?}", trigger.generate_trigger());
         debug!(
@@ -84,7 +84,7 @@ impl PsiMonitor {
         let fd = event.data as RawFd;
         assert_ne!(fd, 0);
         match self.triggers.get_mut(&fd) {
-            None => Err(PsiError::UnregisteredEvent),
+            None => Err(UnregisteredEvent),
             Some(target) => {
                 debug!("psi event triggered");
                 target.buf.clear();

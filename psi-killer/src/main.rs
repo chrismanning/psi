@@ -11,7 +11,6 @@ use simplelog::*;
 
 use psi::error::*;
 use psi::*;
-use psi::trigger::Trigger;
 
 fn main() -> Result<()> {
     SimpleLogger::init(LevelFilter::Trace, Config::default())?;
