@@ -99,6 +99,15 @@ impl TriggerBuilderLine {
             line: self.line,
         }
     }
+
+    pub fn threshold(self, threshold: TriggerThreshold) -> TriggerBuilderStaging {
+        TriggerBuilderStaging {
+            threshold,
+            kind: self.kind,
+            target_file_path: self.target_file_path,
+            line: self.line,
+        }
+    }
 }
 
 pub struct TriggerBuilderStall {
@@ -111,11 +120,13 @@ pub struct TriggerBuilderStall {
 impl TriggerBuilderStall {
     pub fn window(self, window: Duration) -> TriggerBuilderStaging {
         TriggerBuilderStaging {
-            window,
             kind: self.kind,
             target_file_path: self.target_file_path,
             line: self.line,
-            stall: self.stall,
+            threshold: TriggerThreshold {
+                window,
+                stall: self.stall,
+            },
         }
     }
 }
@@ -124,8 +135,7 @@ pub struct TriggerBuilderStaging {
     kind: PsiKind,
     target_file_path: PathBuf,
     line: PsiLine,
-    stall: Duration,
-    window: Duration,
+    threshold: TriggerThreshold,
 }
 
 impl TriggerBuilderStaging {
@@ -134,10 +144,7 @@ impl TriggerBuilderStaging {
             kind: self.kind,
             target_file_path: self.target_file_path,
             line: self.line,
-            threshold: TriggerThreshold {
-                window: self.window,
-                stall: self.stall,
-            },
+            threshold: self.threshold,
         }
     }
 }
@@ -155,26 +162,5 @@ impl fmt::Display for TriggerThreshold {
             self.stall.as_micros(),
             self.window.as_micros()
         )
-    }
-}
-
-pub struct MemoryTrigger;
-
-impl MemoryTrigger {
-    pub fn some(stall: Duration, window: Duration) -> Trigger {
-        Self::new(PsiLine::Some, stall, window)
-    }
-
-    pub fn full(stall: Duration, window: Duration) -> Trigger {
-        Self::new(PsiLine::Full, stall, window)
-    }
-
-    pub fn new(line: PsiLine, stall: Duration, window: Duration) -> Trigger {
-        Trigger {
-            line,
-            kind: PsiKind::Memory,
-            target_file_path: MEMORY_PRESSURE_FILEPATH.into(),
-            threshold: TriggerThreshold { stall, window },
-        }
     }
 }
