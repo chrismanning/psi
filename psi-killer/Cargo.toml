@@ -3,7 +3,7 @@ name = "psi-killer"
 version = "0.1.0"
 authors = ["Chris Manning <cmanning999@gmail.com>"]
 edition = "2018"
-license = "GPL-3.0-only"
+license = "MPL-2.0"
 readme = "README.md"
 repository = "https://github.com/chrismanning/psi"
 
