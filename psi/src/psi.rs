@@ -97,9 +97,7 @@ impl Psi {
         if v.len() == 2 && v[0] == key {
             v[1].parse::<T>().map_err(E::into)
         } else {
-            Err(PsiParseError(UnexpectedTerm(
-                term.to_string(),
-            )))
+            Err(PsiParseError(UnexpectedTerm(term.to_string())))
         }
     }
 }
@@ -120,30 +118,10 @@ impl FromStr for Psi {
     fn from_str(s: &str) -> Result<Self> {
         let terms: Vec<&str> = s.split_ascii_whitespace().collect();
         let line = terms[0].parse()?;
-        let avg10 = Psi::parse_stat(
-            "avg10",
-            terms
-                .get(1)
-                .ok_or(UnexpectedTerm(s.to_string()))?,
-        )?;
-        let avg60 = Psi::parse_stat(
-            "avg60",
-            terms
-                .get(2)
-                .ok_or(UnexpectedTerm(s.to_string()))?,
-        )?;
-        let avg300 = Psi::parse_stat(
-            "avg300",
-            terms
-                .get(3)
-                .ok_or(UnexpectedTerm(s.to_string()))?,
-        )?;
-        let total = Psi::parse_stat(
-            "total",
-            terms
-                .get(4)
-                .ok_or(UnexpectedTerm(s.to_string()))?,
-        )?;
+        let avg10 = Psi::parse_stat("avg10", terms.get(1).ok_or(UnexpectedTerm(s.to_string()))?)?;
+        let avg60 = Psi::parse_stat("avg60", terms.get(2).ok_or(UnexpectedTerm(s.to_string()))?)?;
+        let avg300 = Psi::parse_stat("avg300", terms.get(3).ok_or(UnexpectedTerm(s.to_string()))?)?;
+        let total = Psi::parse_stat("total", terms.get(4).ok_or(UnexpectedTerm(s.to_string()))?)?;
         Ok(Psi {
             line,
             avg10,

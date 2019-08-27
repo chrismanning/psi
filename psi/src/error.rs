@@ -19,6 +19,7 @@ pub enum PsiError {
         expected_line: crate::PsiLine,
     },
     UnregisteredEvent,
+    PsiTriggerFileError,
     LoggingInitError(log::SetLoggerError),
 }
 
@@ -41,8 +42,8 @@ impl Error for PsiError {
         match self {
             IoError(e) => Some(e),
             PsiParseError(e) => match e {
-                TotalParseError(e) => Some(e),
-                AvgParseError(e) => Some(e),
+                TotalParseError(_) => None,
+                AvgParseError(_) => None,
                 UnexpectedTerm(_) => None,
                 MissingLine(_) => None,
             },
@@ -68,8 +69,8 @@ impl fmt::Display for PsiError {
                 UnregisteredEvent => write!(f, "unregistered event triggered"),
                 PsiParseError(p) => match p {
                     UnexpectedTerm(t) => write!(f, "unexpected psi term '{}'", t),
-                    TotalParseError(_) => write!(f, "error parsing psi total"),
-                    AvgParseError(_) => write!(f, "error parsing psi avg"),
+                    TotalParseError(e) => write!(f, "error parsing psi total: {}", e),
+                    AvgParseError(e) => write!(f, "error parsing psi avg: {}", e),
                     MissingLine(line) => write!(f, "missing line '{}'", line),
                 },
                 _ => write!(f, "unknown error"),

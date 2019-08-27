@@ -14,18 +14,22 @@ use crate::trigger::*;
 use crate::*;
 
 pub struct PsiEvent {
-    pub kind: PsiKind,
     pub stats: Psi,
+    pub trigger: Trigger,
 }
 
 impl fmt::Display for PsiEvent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "event triggered, stats: {}", self.stats)
+        write!(
+            f,
+            "event triggered, stats: {}, trigger: {}",
+            self.stats, self.trigger
+        )
     }
 }
 
 struct PsiTriggerTarget {
-    kind: PsiKind,
+    trigger: Trigger,
     file: File,
     buf: String,
 }
@@ -65,7 +69,7 @@ impl PsiMonitor {
 
         let target = PsiTriggerTarget {
             file,
-            kind: trigger.kind,
+            trigger,
             buf: String::with_capacity(128),
         };
         self.triggers.insert(raw_fd, target);
@@ -74,19 +78,20 @@ impl PsiMonitor {
 
     pub fn wait_single(&mut self) -> Result<PsiEvent> {
         debug!("waiting for psi event");
-        let mut event_buf = vec![Event { events: 0, data: 0 }];
+        let mut event_buf = [Event { events: 0, data: 0 }];
         let n = wait(self.epoll_fd, -1, &mut event_buf)?;
         assert_eq!(n, 1);
         let event = event_buf[0];
-        if event.events & Events::EPOLLERR.bits() != 0 {
-            // TODO handle event removal
-        }
         let fd = event.data as RawFd;
         assert_ne!(fd, 0);
         match self.triggers.get_mut(&fd) {
             None => Err(UnregisteredEvent),
             Some(target) => {
-                debug!("psi event triggered");
+                info!("psi event triggered: {}", target.trigger);
+                if event.events & Events::EPOLLERR.bits() != 0 {
+                    error!("error on watched psi file");
+                    return Err(PsiTriggerFileError);
+                }
                 target.buf.clear();
                 debug!("reading contents of file {:?}", target.file.file_path());
                 target.file.seek(Start(0))?;
@@ -96,7 +101,7 @@ impl PsiMonitor {
                 let stats = target.buf.parse()?;
                 Ok(PsiEvent {
                     stats,
-                    kind: target.kind,
+                    trigger: target.trigger.clone(),
                 })
             }
         }

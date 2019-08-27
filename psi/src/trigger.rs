@@ -8,6 +8,7 @@ use crate::*;
 
 const MEMORY_PRESSURE_FILEPATH: &'static str = "/proc/pressure/memory";
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Trigger {
     pub kind: PsiKind,
     pub line: PsiLine,
@@ -56,7 +57,7 @@ impl TriggerBuilder {
     pub fn memory(self) -> TriggerBuilderKind {
         TriggerBuilderKind {
             kind: PsiKind::Memory,
-            target_file_path: Path::new(MEMORY_PRESSURE_FILEPATH).to_path_buf()
+            target_file_path: Path::new(MEMORY_PRESSURE_FILEPATH).to_path_buf(),
         }
     }
 }
@@ -149,6 +150,7 @@ impl TriggerBuilderStaging {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TriggerThreshold {
     pub stall: Duration,
     pub window: Duration,
