@@ -1,17 +1,16 @@
 use std::collections::hash_map::*;
 use std::fmt;
-use std::fs::{read_link, File, OpenOptions};
+use std::fs::{File, OpenOptions};
 use std::io::SeekFrom::Start;
 use std::io::{Read, Seek, Write};
 use std::os::unix::io::*;
-use std::path::PathBuf;
 
 use epoll::*;
 use log::*;
 
 use crate::error::*;
 use crate::trigger::*;
-use crate::*;
+use crate::psi::*;
 
 pub struct PsiEvent {
     pub stats: Psi,
@@ -105,17 +104,5 @@ impl PsiMonitor {
                 })
             }
         }
-    }
-}
-
-trait FilePath {
-    fn file_path(&self) -> StdResult<PathBuf, std::io::Error>;
-}
-
-impl FilePath for File {
-    fn file_path(&self) -> StdResult<PathBuf, std::io::Error> {
-        let raw_fd = self.as_raw_fd();
-        let fd_link_path = format!("/proc/self/fd/{}", raw_fd);
-        read_link(fd_link_path)
     }
 }

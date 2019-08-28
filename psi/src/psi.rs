@@ -1,48 +1,59 @@
 use std::fmt;
-use std::fs::OpenOptions;
+use std::fs::{OpenOptions, File, read_link};
 use std::io::Read;
+use std::os::unix::io::*;
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use crate::error::*;
 
+pub(crate) const CPU_PRESSURE_FILEPATH: &'static str = "/proc/pressure/cpu";
+pub(crate) const IO_PRESSURE_FILEPATH: &'static str = "/proc/pressure/io";
 pub(crate) const MEMORY_PRESSURE_FILEPATH: &'static str = "/proc/pressure/memory";
-
-pub fn read_all_memory_pressure() -> Result<AllPsiStats> {
-    let mut file = OpenOptions::new()
-        .read(true)
-        .open(MEMORY_PRESSURE_FILEPATH)?;
-    let mut buf = String::with_capacity(256);
-    file.read_to_string(&mut buf)?;
-    let all = buf
-        .lines()
-        .map(|line| line.parse())
-        .collect::<Result<Vec<Psi>>>()?;
-    let some = all
-        .iter()
-        .find(|psi| psi.line == PsiLine::Some)
-        .ok_or(MissingLine(PsiLine::Some))?
-        .clone();
-    let full = all
-        .iter()
-        .find(|psi| psi.line == PsiLine::Full)
-        .ok_or(MissingLine(PsiLine::Full))?
-        .clone();
-    Ok(AllPsiStats { some, full })
-}
-
-pub fn read_some_memory_pressure() -> Result<Psi> {
-    read_all_memory_pressure().map(|all| all.some)
-}
-
-pub fn read_full_memory_pressure() -> Result<Psi> {
-    read_all_memory_pressure().map(|all| all.full)
-}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum PsiKind {
     Memory,
     IO,
     CPU,
+}
+
+impl PsiKind {
+    pub fn read_psi(&self) -> Result<AllPsiStats> {
+        let path = match self {
+            PsiKind::Memory => MEMORY_PRESSURE_FILEPATH,
+            PsiKind::IO => IO_PRESSURE_FILEPATH,
+            PsiKind::CPU => CPU_PRESSURE_FILEPATH,
+        };
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(path)?;
+        let mut buf = String::with_capacity(256);
+        file.read_to_string(&mut buf)?;
+        let all = buf
+            .lines()
+            .map(|line| line.parse())
+            .collect::<Result<Vec<Psi>>>()?;
+        let some = all
+            .iter()
+            .find(|psi| psi.line == PsiLine::Some)
+            .ok_or(MissingLine(PsiLine::Some))?
+            .clone();
+        let full = all
+            .iter()
+            .find(|psi| psi.line == PsiLine::Full)
+            .ok_or(MissingLine(PsiLine::Full))?
+            .clone();
+        Ok(AllPsiStats { some, full })
+    }
+
+    pub fn read_psi_line(&self, line: PsiLine) -> Result<Psi> {
+        let all = self.read_psi()?;
+        match line {
+            PsiLine::Some => Ok(all.some),
+            PsiLine::Full => Ok(all.full),
+        }
+    }
 }
 
 impl fmt::Display for PsiKind {
@@ -172,5 +183,17 @@ mod tests {
                 total: 27787674,
             }
         );
+    }
+}
+
+pub(crate) trait FilePath {
+    fn file_path(&self) -> StdResult<PathBuf, std::io::Error>;
+}
+
+impl FilePath for File {
+    fn file_path(&self) -> StdResult<PathBuf, std::io::Error> {
+        let raw_fd = self.as_raw_fd();
+        let fd_link_path = format!("/proc/self/fd/{}", raw_fd);
+        read_link(fd_link_path)
     }
 }
