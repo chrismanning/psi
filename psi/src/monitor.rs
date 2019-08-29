@@ -9,8 +9,8 @@ use epoll::*;
 use log::*;
 
 use crate::error::*;
-use crate::trigger::*;
 use crate::psi::*;
+use crate::trigger::*;
 
 pub struct PsiEvent {
     pub stats: Psi,

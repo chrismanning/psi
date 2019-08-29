@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fs::{OpenOptions, File, read_link};
+use std::fs::{read_link, File, OpenOptions};
 use std::io::Read;
 use std::os::unix::io::*;
 use std::path::PathBuf;
@@ -25,9 +25,7 @@ impl PsiKind {
             PsiKind::IO => IO_PRESSURE_FILEPATH,
             PsiKind::CPU => CPU_PRESSURE_FILEPATH,
         };
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(path)?;
+        let mut file = OpenOptions::new().read(true).open(path)?;
         let mut buf = String::with_capacity(256);
         file.read_to_string(&mut buf)?;
         let all = buf
