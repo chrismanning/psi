@@ -2,8 +2,8 @@ extern crate log;
 extern crate psi;
 extern crate simplelog;
 
-mod memory;
-
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::time::Duration;
 
 use log::*;
@@ -12,7 +12,17 @@ use simplelog::*;
 use psi::error::*;
 use psi::*;
 
-use memory::*;
+const SYSRQ_TRIGGER_PATH: &'static str = "/proc/sysrq-trigger";
+
+pub fn low_mem_handler() -> Result<()> {
+    Ok(())
+}
+
+pub fn trigger_oom_killer() -> Result<()> {
+    warn!("triggering oom killer");
+    let mut sysrq = OpenOptions::new().write(true).open(SYSRQ_TRIGGER_PATH)?;
+    Ok(sysrq.write_all(&['f' as u8])?)
+}
 
 fn main() -> Result<()> {
     SimpleLogger::init(LevelFilter::Trace, Config::default())?;
