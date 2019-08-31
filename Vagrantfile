@@ -57,7 +57,7 @@ Vagrant.configure("2") do |config|
     # vb.gui = true
 
     # Customize the amount of memory on the VM:
-    vb.memory = "128"
+    vb.memory = "1024"
   end
 
   # View the documentation for the provider you are using for more
@@ -68,6 +68,7 @@ Vagrant.configure("2") do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     sudo pacman -Sy --noconfirm htop
+    sudo pacman -Sy --noconfirm stress
   SHELL
 
   config.vm.provision "file", source: "target/x86_64-unknown-linux-musl/debug/psi-killer", destination: "psi-killer"
