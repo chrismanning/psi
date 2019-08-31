@@ -6,8 +6,11 @@ use std::time::Duration;
 
 use crate::*;
 
+const CPU_PRESSURE_FILEPATH: &'static str = "/proc/pressure/cpu";
+const IO_PRESSURE_FILEPATH: &'static str = "/proc/pressure/io";
 const MEMORY_PRESSURE_FILEPATH: &'static str = "/proc/pressure/memory";
 
+/// PSI trigger
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Trigger {
     pub kind: PsiKind,
@@ -17,11 +20,12 @@ pub struct Trigger {
 }
 
 impl Trigger {
+    /// Start building a trigger
     pub fn new_builder() -> TriggerBuilder {
         TriggerBuilder
     }
 
-    pub fn generate_trigger(&self) -> CString {
+    pub(crate) fn generate_trigger(&self) -> CString {
         let mut buf = Vec::<u8>::with_capacity(32);
         match self.line {
             PsiLine::Some => write!(&mut buf, "some ").unwrap(),
@@ -48,9 +52,23 @@ pub struct TriggerBuilder;
 impl TriggerBuilder {
     pub fn kind(self, kind: PsiKind) -> TriggerBuilderKind {
         match kind {
+            PsiKind::CPU => self.cpu(),
+            PsiKind::IO => self.io(),
             PsiKind::Memory => self.memory(),
-            PsiKind::IO => unimplemented!(),
-            PsiKind::CPU => unimplemented!(),
+        }
+    }
+
+    pub fn cpu(self) -> TriggerBuilderKind {
+        TriggerBuilderKind {
+            kind: PsiKind::CPU,
+            target_file_path: Path::new(CPU_PRESSURE_FILEPATH).to_path_buf(),
+        }
+    }
+
+    pub fn io(self) -> TriggerBuilderKind {
+        TriggerBuilderKind {
+            kind: PsiKind::IO,
+            target_file_path: Path::new(IO_PRESSURE_FILEPATH).to_path_buf(),
         }
     }
 

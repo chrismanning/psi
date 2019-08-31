@@ -117,7 +117,11 @@ impl fmt::Display for Psi {
         write!(
             f,
             "{} avg10={} avg60={} avg300={} total={}",
-            self.line, self.avg10, self.avg60, self.avg300, self.total.as_micros()
+            self.line,
+            self.avg10,
+            self.avg60,
+            self.avg300,
+            self.total.as_micros()
         )
     }
 }
@@ -131,7 +135,8 @@ impl FromStr for Psi {
         let avg10 = Psi::parse_stat("avg10", terms.get(1).ok_or(UnexpectedTerm(s.to_string()))?)?;
         let avg60 = Psi::parse_stat("avg60", terms.get(2).ok_or(UnexpectedTerm(s.to_string()))?)?;
         let avg300 = Psi::parse_stat("avg300", terms.get(3).ok_or(UnexpectedTerm(s.to_string()))?)?;
-        let total_stall = Psi::parse_stat("total", terms.get(4).ok_or(UnexpectedTerm(s.to_string()))?)?;
+        let total_stall =
+            Psi::parse_stat("total", terms.get(4).ok_or(UnexpectedTerm(s.to_string()))?)?;
         Ok(Psi {
             line,
             avg10,
@@ -146,6 +151,13 @@ impl FromStr for Psi {
 pub struct AllPsiStats {
     pub some: Psi,
     pub full: Psi,
+}
+
+impl fmt::Display for AllPsiStats {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "{}", self.some)?;
+        write!(f, "{}", self.full)
+    }
 }
 
 #[cfg(test)]

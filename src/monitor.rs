@@ -12,9 +12,13 @@ use crate::error::*;
 use crate::psi::*;
 use crate::trigger::*;
 
+/// PSI event
 pub struct PsiEvent {
+    /// PSI stats as read after the event fired
     pub stats: Psi,
+    /// The trigger this event fired for
     pub trigger: Trigger,
+    /// Opaque ID of the trigger this event fired for
     pub id: TriggerId,
 }
 
@@ -34,12 +38,16 @@ struct PsiTriggerTarget {
     buf: String,
 }
 
+/// PSI monitor
+///
+/// Watches for changes to resource pressure based on user-defined thresholds.
 pub struct PsiMonitor {
     epoll_fd: RawFd,
     triggers: HashMap<RawFd, PsiTriggerTarget>,
 }
 
 impl PsiMonitor {
+    /// Create a PsiMonitor instance.
     pub fn new() -> Result<Self> {
         let epoll_fd = create(false)?;
         Ok(PsiMonitor {
@@ -48,6 +56,10 @@ impl PsiMonitor {
         })
     }
 
+    /// Add a trigger to the monitor
+    ///
+    /// Registers a threshold with the kernel and uses epoll to handle events
+    /// the kernel produces when the threshold is reached.
     pub fn add_trigger(&mut self, trigger: Trigger) -> Result<TriggerId> {
         let mut file = OpenOptions::new()
             .read(true)
@@ -76,6 +88,7 @@ impl PsiMonitor {
         Ok(TriggerId { raw_fd })
     }
 
+    /// Wait for a PSI pressure event to fire based on some previously added trigger(s).
     pub fn wait_single(&mut self) -> Result<PsiEvent> {
         debug!("waiting for psi event");
         let mut event_buf = [Event { events: 0, data: 0 }];
@@ -109,6 +122,7 @@ impl PsiMonitor {
     }
 }
 
+/// ID for a specific trigger
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct TriggerId {
     raw_fd: RawFd,

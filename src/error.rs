@@ -9,6 +9,7 @@ pub(crate) use PsiError::*;
 
 pub type Result<T> = StdResult<T, PsiError>;
 
+/// Error type for PSI
 #[derive(Debug)]
 pub enum PsiError {
     IoError(std::io::Error),
@@ -23,6 +24,7 @@ pub enum PsiError {
     LoggingInitError(log::SetLoggerError),
 }
 
+/// Error type for PSI parsing
 #[derive(Debug)]
 pub enum ParseError {
     TotalParseError(ParseIntError),
