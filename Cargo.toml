@@ -9,6 +9,7 @@ readme = "README.md"
 repository = "https://github.com/chrismanning/psi"
 homepage = "https://github.com/chrismanning/psi"
 description = "Linux Pressure Stall Information (PSI) for Rust"
+documentation = "https://docs.rs/psi"
 
 [dependencies]
 epoll = "4.1.0"

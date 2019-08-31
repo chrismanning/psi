@@ -10,15 +10,18 @@
 //! # Example
 //!
 //! ```
-//! use psi::*;
+//! use crate::psi::*;
 //!
-//! let all: AllPsiStats = PsiKind::Memory.read_psi()?;
-//! if all.some.avg10 > 0.1f32 {
-//!     // do something
-//! }
-//! let full: Psi = PsiKind::Memory.read_psi_line(PsiLine::Full)?;
-//! if full.avg60 > 0.1f32 {
-//!     // do something else
+//! fn example() -> Result<()> {
+//!     let all: AllPsiStats = PsiKind::Memory.read_psi()?;
+//!     if all.some.avg10 > 0.1f32 {
+//!         // do something
+//!     }
+//!     let full: Psi = PsiKind::Memory.read_psi_line(PsiLine::Full)?;
+//!     if full.avg60 > 0.1f32 {
+//!         // do something else
+//!     }
+//!     Ok(())
 //! }
 //! ```
 //!
@@ -26,20 +29,23 @@
 //!
 //! ```
 //! use std::time::Duration;
-//! use psi::*;
+//! use crate::psi::*;
 //!
-//! let oom_id = monitor.add_trigger(
-//!     Trigger::new_builder()
-//!         .memory()
-//!         .full()
-//!         .stall(Duration::from_millis(100))
-//!         .window(Duration::from_millis(500))
-//!         .build(),
-//! )?;
+//! fn example() -> Result<()> {
+//!     let mut monitor = PsiMonitor::new()?;
+//!     let oom_id = monitor.add_trigger(
+//!         Trigger::new_builder()
+//!             .memory()
+//!             .full()
+//!             .stall(Duration::from_millis(100))
+//!             .window(Duration::from_millis(500))
+//!             .build(),
+//!     )?;
 //!
-//! loop {
-//!     let psi_event: PsiEvent = monitor.wait_single()?;
-//!     // react to psi_event
+//!     loop {
+//!         let psi_event: PsiEvent = monitor.wait_single()?;
+//!         // react to psi_event
+//!     }
 //! }
 //! ```
 //!
