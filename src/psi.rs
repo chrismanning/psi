@@ -4,6 +4,7 @@ use std::io::Read;
 use std::os::unix::io::*;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::time::Duration;
 
 use crate::error::*;
 
@@ -97,7 +98,7 @@ pub struct Psi {
     pub avg10: f32,
     pub avg60: f32,
     pub avg300: f32,
-    pub total: u64,
+    pub total: Duration,
 }
 
 impl Psi {
@@ -116,7 +117,7 @@ impl fmt::Display for Psi {
         write!(
             f,
             "{} avg10={} avg60={} avg300={} total={}",
-            self.line, self.avg10, self.avg60, self.avg300, self.total
+            self.line, self.avg10, self.avg60, self.avg300, self.total.as_micros()
         )
     }
 }
@@ -130,13 +131,13 @@ impl FromStr for Psi {
         let avg10 = Psi::parse_stat("avg10", terms.get(1).ok_or(UnexpectedTerm(s.to_string()))?)?;
         let avg60 = Psi::parse_stat("avg60", terms.get(2).ok_or(UnexpectedTerm(s.to_string()))?)?;
         let avg300 = Psi::parse_stat("avg300", terms.get(3).ok_or(UnexpectedTerm(s.to_string()))?)?;
-        let total = Psi::parse_stat("total", terms.get(4).ok_or(UnexpectedTerm(s.to_string()))?)?;
+        let total_stall = Psi::parse_stat("total", terms.get(4).ok_or(UnexpectedTerm(s.to_string()))?)?;
         Ok(Psi {
             line,
             avg10,
             avg60,
             avg300,
-            total,
+            total: Duration::from_micros(total_stall),
         })
     }
 }
@@ -162,7 +163,7 @@ mod tests {
                 avg10: 0.16f32,
                 avg60: 0f32,
                 avg300: 0f32,
-                total: 27787674,
+                total: Duration::from_micros(27787674),
             }
         );
     }
@@ -178,7 +179,7 @@ mod tests {
                 avg10: 0.16f32,
                 avg60: 0f32,
                 avg300: 0f32,
-                total: 27787674,
+                total: Duration::from_micros(27787674),
             }
         );
     }
