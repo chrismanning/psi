@@ -15,6 +15,7 @@ use crate::trigger::*;
 pub struct PsiEvent {
     pub stats: Psi,
     pub trigger: Trigger,
+    pub id: TriggerId,
 }
 
 impl fmt::Display for PsiEvent {
@@ -47,7 +48,7 @@ impl PsiMonitor {
         })
     }
 
-    pub fn add_trigger(&mut self, trigger: Trigger) -> Result<()> {
+    pub fn add_trigger(&mut self, trigger: Trigger) -> Result<TriggerId> {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -72,7 +73,7 @@ impl PsiMonitor {
             buf: String::with_capacity(128),
         };
         self.triggers.insert(raw_fd, target);
-        Ok(())
+        Ok(TriggerId { raw_fd })
     }
 
     pub fn wait_single(&mut self) -> Result<PsiEvent> {
@@ -101,8 +102,14 @@ impl PsiMonitor {
                 Ok(PsiEvent {
                     stats,
                     trigger: target.trigger.clone(),
+                    id: TriggerId { raw_fd: fd },
                 })
             }
         }
     }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct TriggerId {
+    raw_fd: RawFd,
 }
