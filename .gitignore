@@ -12,3 +12,6 @@ Cargo.lock
 # idea
 .idea/
 **/*.iml
+
+# vagrant
+.vagrant
