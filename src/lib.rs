@@ -56,11 +56,15 @@
 //! [Pressure Stall Information (PSI)]: https://www.kernel.org/doc/html/latest/accounting/psi.html
 
 pub mod error;
+#[cfg (feature = "monitor")]
 pub mod monitor;
 pub mod psi;
+#[cfg (feature = "monitor")]
 pub mod trigger;
 
 pub use crate::psi::{AllPsiStats, Psi, PsiKind, PsiLine};
 pub use error::{PsiError, Result};
+#[cfg (feature = "monitor")]
 pub use monitor::{PsiEvent, PsiMonitor, TriggerId};
+#[cfg (feature = "monitor")]
 pub use trigger::Trigger;

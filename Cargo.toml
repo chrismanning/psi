@@ -11,8 +11,12 @@ homepage = "https://github.com/chrismanning/psi"
 description = "Linux Pressure Stall Information (PSI) for Rust"
 documentation = "https://docs.rs/psi"
 
+[features]
+default = ["monitor"]
+monitor = ["epoll"]
+
 [dependencies]
-epoll = "4.1.0"
+epoll = { version = "4.1.0", optional = true }
 log = "0.4"
 
 [dev-dependencies]
