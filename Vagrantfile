@@ -71,5 +71,5 @@ Vagrant.configure("2") do |config|
     sudo pacman -Sy --noconfirm stress
   SHELL
 
-  config.vm.provision "file", source: "target/x86_64-unknown-linux-musl/debug/psi-killer", destination: "psi-killer"
+  config.vm.provision "file", source: "target/x86_64-unknown-linux-musl/debug/examples/psi-killer", destination: "psi-killer"
 end
