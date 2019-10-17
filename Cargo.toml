@@ -1,6 +1,6 @@
 [package]
 name = "psi"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Chris Manning <cmanning999@gmail.com>"]
 edition = "2018"
 categories = ["os", "os::unix-apis"]
